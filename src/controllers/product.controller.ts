@@ -1,5 +1,6 @@
 import { CreateProductDto } from '@/dtos/product.dto';
 import { HttpException } from '@/exceptions/HttpException';
+import { RequestWithUser } from '@/interfaces/auth.interface';
 import CategoryService from '@/services/category.service';
 import ProductService from '@/services/product.service';
 import { Product } from '@prisma/client';
@@ -28,9 +29,9 @@ class ProductController {
     }
   };
 
-  public getProductById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public getProductById = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const dummies = [1, 2, 3];
+      console.log(req.user);
 
       const productId = req.params.id;
 

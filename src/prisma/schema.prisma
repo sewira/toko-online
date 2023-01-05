@@ -32,8 +32,7 @@ model Product {
   description String?
   createdAt DateTime  @default(now())
   categories ProductCategory[]
-  orders Order[]
-  
+  itemOrder ItemOrder[]
 
 }
 
@@ -53,15 +52,31 @@ enum OrderStatus {
   CANCELED
 }
 
+
 model Order {
   id       String    @id @default(uuid())
   status OrderStatus @default(PENDING)
   createdAt DateTime  @default(now())
-  products Product[]
-
+  itemOrder ItemOrder[]
+  totalPrice Int 
 
   user User @relation(fields: [userId], references: [id])
   userId String
 }
+
+
+model ItemOrder {
+  id String @id @default(uuid())
+  totalItem  Int 
+  totalPriceItem Int 
+
+  product Product @relation(fields: [productId], references: [id])
+  productId String
+
+  orderId String
+  order Order @relation(fields: [orderId], references: [id])
+  
+}
+
 
 
