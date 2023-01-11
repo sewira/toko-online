@@ -11,9 +11,6 @@ import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS } from '@config';
 import { Routes } from '@interfaces/routes.interface';
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
-import http from 'http';
-import { ServerSocket } from './socket';
-import { Socket, Server } from 'socket.io';
 
 class App {
   public app: express.Application;
