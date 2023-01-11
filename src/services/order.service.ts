@@ -1,7 +1,7 @@
 import { AddOrderDto } from '@/dtos/order.dto';
 import { HttpException } from '@/exceptions/HttpException';
 
-import { PrismaClient, Order, User, Product } from '@prisma/client';
+import { PrismaClient, Order, User, Product, OrderStatus } from '@prisma/client';
 
 class OrderService {
   public order = new PrismaClient().order;
@@ -11,71 +11,139 @@ class OrderService {
   //buy servie
 
   public async addOrder(user: User, orderData: AddOrderDto) {
-    const listProduct: Product[] = [];
+    try {
+      const listProduct: Product[] = [];
 
-    for (let index = 0; index < orderData.products.length; index++) {
-      const element = orderData.products[index];
+      for (let index = 0; index < orderData.products.length; index++) {
+        const element = orderData.products[index];
 
-      const findProduct: Product = await this.product.findFirst({
-        where: {
-          id: element.productId,
-          AND: {
-            quanty: {
-              gte: element.totalProduct,
+        const findProduct: Product = await this.product.findFirst({
+          where: {
+            id: element.productId,
+            AND: {
+              quanty: {
+                gte: element.totalProduct,
+              },
+            },
+          },
+        });
+
+        if (findProduct !== null) {
+          listProduct.push(findProduct);
+        } else {
+          throw new HttpException(400, `Product ${element.productId} tidak tersedia atau jumlah yang dipesan melebihi stock`);
+        }
+      }
+
+      await this.order.create({
+        data: {
+          totalPrice: orderData.totalPrice,
+          itemOrder: {
+            create: orderData.products.map(item => {
+              return {
+                totalItem: item.totalProduct,
+                totalPriceItem: item.totalProductPrice,
+                product: {
+                  connect: {
+                    id: item.productId,
+                  },
+                },
+              };
+            }),
+          },
+          user: {
+            connect: {
+              id: user.id,
             },
           },
         },
       });
+      for (let index = 0; index < orderData.products.length; index++) {
+        const element = orderData.products[index];
 
-      if (findProduct !== null) {
-        listProduct.push(findProduct);
-      } else {
-        throw new HttpException(400, `Product ${element.productId} tidak tersedia atau jumlah yang dipesan melebihi stock`);
+        await this.product.update({
+          where: {
+            id: element.productId,
+          },
+          data: {
+            quanty: {
+              decrement: element.totalProduct,
+            },
+          },
+        });
       }
+    } catch (error) {
+      throw new HttpException(500, `${error.message}`);
     }
 
-    const mappingItemOrder = orderData.products.map(item => {
-      return {
-        totalItem: item.totalProduct,
-        totalPriceItem: item.totalProductPrice,
-        product: {
-          connect: {
-            id: item.productId,
-          },
-        },
-      };
-    });
+    return 'Sukses';
+  }
 
-    const createOrder: Order = await this.order.create({
-      data: {
-        totalPrice: orderData.totalPrice,
-        itemOrder: {
-          create: mappingItemOrder,
-        },
-        user: {
-          connect: {
-            id: user.id,
-          },
-        },
-      },
-    });
-
-    for (let index = 0; index < orderData.products.length; index++) {
-      const element = orderData.products[index];
-
-      await this.product.update({
+  public async findOrderById(orderId: string): Promise<Order> {
+    try {
+      const findOrderById: Order = await this.order.findUnique({
         where: {
-          id: element.productId,
+          id: orderId,
         },
-        data: {
-          quanty: {
-            decrement: element.totalProduct,
+        include: {
+          itemOrder: true,
+        },
+      });
+
+      return findOrderById;
+    } catch (error) {
+      throw new HttpException(500, `${error.message}`);
+    }
+  }
+
+  public async searchOrders(user: User, page: number, size: number, categoryId: string, status: number) {
+    try {
+      let orderStatus: OrderStatus | undefined;
+
+      switch (status) {
+        case 1:
+          orderStatus = 'PENDING';
+          break;
+        case 2:
+          orderStatus = 'PROCESS';
+          break;
+        case 3:
+          orderStatus = 'SUCCESS';
+          break;
+        case 4:
+          orderStatus = 'CANCELED';
+        default:
+          orderStatus = undefined;
+      }
+
+      return await this.order.findMany({
+        skip: page,
+        take: size,
+        where: {
+          user: {
+            id: {
+              equals: user.role === 'ADMIN' ? undefined : user.id,
+            },
+          },
+          itemOrder: {
+            every: {
+              product: {
+                categories: {
+                  every: {
+                    id: categoryId,
+                  },
+                },
+              },
+            },
+          },
+          status: {
+            equals: orderStatus,
           },
         },
       });
+    } catch (error) {
+      throw new HttpException(500, `${error.message}`);
     }
-
-    return createOrder;
   }
 }
 

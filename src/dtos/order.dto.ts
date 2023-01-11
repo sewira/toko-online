@@ -15,7 +15,6 @@ export class ProductOrderDto {
   public productId: string;
 
   @IsNumber()
-  @Min(10)
   public totalProduct: number;
 
   @IsNumber()

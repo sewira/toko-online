@@ -11,6 +11,9 @@ import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS } from '@config';
 import { Routes } from '@interfaces/routes.interface';
 import errorMiddleware from '@middlewares/error.middleware';
 import { logger, stream } from '@utils/logger';
+import http from 'http';
+import { ServerSocket } from './socket';
+import { Socket, Server } from 'socket.io';
 
 class App {
   public app: express.Application;
@@ -20,7 +23,7 @@ class App {
   constructor(routes: Routes[]) {
     this.app = express();
     this.env = NODE_ENV || 'development';
-    this.port = PORT || 3000;
+    this.port = PORT || 3030;
 
     this.initializeMiddlewares();
     this.initializeRoutes(routes);

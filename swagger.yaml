@@ -1,5 +1,5 @@
 tags:
-- name: users
+- name: userss
   description: users API
 
 paths:
@@ -121,3 +121,4 @@ definitions:
 schemes:
  - https
  - http
+

@@ -1,6 +1,5 @@
 import { CreateProductDto } from '@/dtos/product.dto';
 import { HttpException } from '@/exceptions/HttpException';
-import { isEmpty } from '@/utils/util';
 import { PrismaClient, Product } from '@prisma/client';
 
 class ProductService {
@@ -25,58 +24,66 @@ class ProductService {
     const checkCategoryId = categoryId === '' ? undefined : categoryId;
 
     if (key !== '') {
-      const findProductWithKey: Product[] = await this.product.findMany({
-        take: size,
-        orderBy: {
-          name: 'asc',
-        },
-        where: {
-          name: {
-            contains: key,
-            mode: 'insensitive',
+      try {
+        const findProductWithKey: Product[] = await this.product.findMany({
+          take: size,
+          orderBy: {
+            name: 'asc',
           },
-          categories: {
-            every: {
-              id: checkCategoryId,
+          where: {
+            name: {
+              contains: key,
+              mode: 'insensitive',
+            },
+            categories: {
+              every: {
+                id: checkCategoryId,
+              },
             },
           },
-        },
-        include: {
-          categories: {
-            select: {
-              id: true,
-              name: true,
+          include: {
+            categories: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      return findProductWithKey;
+        return findProductWithKey;
+      } catch (error) {
+        throw new HttpException(500, error.message);
+      }
     } else {
-      const findProduct: Product[] = await this.product.findMany({
-        skip: page,
-        take: size,
-        orderBy: {
-          name: 'asc',
-        },
-        where: {
-          categories: {
-            every: {
-              id: checkCategoryId,
+      try {
+        const findProduct: Product[] = await this.product.findMany({
+          skip: page,
+          take: size,
+          orderBy: {
+            name: 'asc',
+          },
+          where: {
+            categories: {
+              every: {
+                id: checkCategoryId,
+              },
             },
           },
-        },
-        include: {
-          categories: {
-            select: {
-              id: true,
-              name: true,
+          include: {
+            categories: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      return findProduct;
+        return findProduct;
+      } catch (error) {
+        throw new HttpException(500, error.message);
+      }
     }
   }
 
@@ -94,21 +101,25 @@ class ProductService {
     });
     if (findProduct) throw new HttpException(400, `Product ${productData.name} already exits`);
 
-    const createProduct: Product = await this.product.create({
-      data: {
-        name: productData.name,
-        imageName: productData.imageName,
-        price: productData.price,
-        quanty: productData.quanty,
-        description: productData.description,
-        categories: {
-          connect: {
-            id: productData.categoryId,
+    try {
+      const createProduct: Product = await this.product.create({
+        data: {
+          name: productData.name,
+          imageName: productData.imageName,
+          price: productData.price,
+          quanty: productData.quanty,
+          description: productData.description,
+          categories: {
+            connect: {
+              id: productData.categoryId,
+            },
           },
         },
-      },
-    });
-    return createProduct;
+      });
+      return createProduct;
+    } catch (error) {
+      throw new HttpException(400, `${error.message}`);
+    }
   }
 
   public async updateProduct(id: string, productData: CreateProductDto) {
