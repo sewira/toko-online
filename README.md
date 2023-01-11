@@ -1,3 +1,3 @@
 # toko-online
 
-(boilerplate from 'typescript-express-starter')
+( boilerplate project from 'typescript-express-starter' )
