@@ -145,6 +145,27 @@ class OrderService {
       throw new HttpException(500, `${error.message}`);
     }
   }
+
+  public async paymentOrders(user: User, orderId: string) {
+    try {
+      return await this.order.update({
+        where: {
+          id: orderId,
+        },
+        data: {
+          status: {
+            set: 'PROCESS',
+          },
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new HttpException(500, `${error.message}`);
+      } else {
+        throw new HttpException(500, `${error.message}`);
+      }
+    }
+  }
 }
 
 export default OrderService;

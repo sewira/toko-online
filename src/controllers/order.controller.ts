@@ -44,6 +44,8 @@ class OrderController {
   };
 
   public searchOrder = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+    console.log(req.originalUrl);
+
     try {
       const user: User = req['user'];
       const status = req.query['status'];
@@ -52,12 +54,16 @@ class OrderController {
       const size = req.query['size'];
       const page = req.query['page'];
 
-      console.log(status);
-
       if (isEmpty(size)) next(new HttpException(400, 'size is empty'));
       if (isEmpty(page)) next(new HttpException(400, 'page is empty'));
 
-      const searchOrderResponse = await this.orderService.searchOrders(user, Number(page), Number(size), categoryId.toString(), Number(status));
+      const searchOrderResponse: Order[] = await this.orderService.searchOrders(
+        user,
+        Number(page),
+        Number(size),
+        categoryId.toString(),
+        Number(status),
+      );
 
       res.status(201).json({ data: searchOrderResponse, message: 'search' });
     } catch (error) {
